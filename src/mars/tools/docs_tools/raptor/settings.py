@@ -1,0 +1,117 @@
+from functools import lru_cache
+from pathlib import Path
+from typing import Literal
+
+from pydantic import Field
+from pydantic_settings import BaseSettings, SettingsConfigDict
+
+
+class RaptorSettings(BaseSettings):
+    # ===========================================
+    # Model Configuration
+    # ===========================================
+    embedding_model: str = Field(
+        default="text-embedding-3-small",
+        description="Embedding model name"
+    )
+    summarization_model: str = Field(
+        default="gpt-5-nano",
+        description="Model for summarization tasks"
+    )
+    qa_model: str = Field(
+        default="gpt-5-nano",
+        description="Model for question answering tasks"
+    )
+    # ===========================================
+    # RAPTOR Hyperparameters
+    # ===========================================
+    max_tokens: int = Field(
+        default=100,
+        ge=1,
+        description="Maximum number of tokens per chunk"
+    )
+    num_layers: int = Field(
+        default=5,
+        ge=1,
+        description="Number of tree layers"
+    )
+    top_k: int = Field(
+        default=10,
+        ge=1,
+        description="Top-K for retrieval"
+    )
+    threshold: float = Field(
+        default=0.5,
+        ge=0.0,
+        le=1.0,
+        description="Threshold for retrieval (Similarity threshold)"
+    )
+    selection_mode: Literal["top_k", "threshold"] = Field(
+        default="top_k",
+        description="Selection mode for retrieval"
+    )
+    summarization_length: int = Field(
+        default=1000,
+        ge=1,
+        description="Maximum tokens for summary generation"
+    )
+    # ===========================================
+    # Clustering Configuration
+    # ===========================================
+    reduction_dimension: int = Field(
+        default=10,
+        ge=2,
+        description="UMAP reduction dimension"
+    )
+    clustering_threshold: float = Field(
+        default=0.1,
+        ge=0.0,
+        le=1.0,
+        description="GMM threshold for soft clustering"
+    )
+    # ===========================================
+    # Vector Store Configuration
+    # ===========================================
+    vector_store_type: Literal["faiss", "chroma"] = Field(
+        default="faiss",
+        description="Vector store backend"
+    )
+    vector_store_path: Path = Field(
+        default=Path("./data/processed"),
+        description="Path to store vector indices"
+    )
+    # ===========================================
+    # Data Paths
+    # ===========================================
+    raw_data_path: Path = Field(
+        default=Path("./data/raw"),
+        description="Raw data directory",
+    )
+    processed_data_path: Path = Field(
+        default=Path("./data/processed"),
+        description="Processed data directory",
+    )
+
+    # ===========================================
+    # Logging & Debug
+    # ===========================================
+    log_level: Literal["DEBUG", "INFO", "WARNING", "ERROR"] = Field(
+        default="INFO",
+        description="Logging level",
+    )
+    verbose: bool = Field(
+        default=False,
+        description="Enable verbose output",
+    )
+
+    def ensure_directories(self) -> None:
+        """Create necessary directories if they don't exist."""
+        self.raw_data_path.mkdir(parents=True, exist_ok=True)
+        self.processed_data_path.mkdir(parents=True, exist_ok=True)
+        self.vector_store_path.mkdir(parents=True, exist_ok=True)
+
+@lru_cache
+def get_settings() -> RaptorSettings:
+    return RaptorSettings()
+
+settings = get_settings()
