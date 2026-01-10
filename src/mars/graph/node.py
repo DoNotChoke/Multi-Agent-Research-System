@@ -4,10 +4,11 @@ from typing import Any, Sequence, Optional, Literal, List
 
 from langchain.tools import BaseTool
 from langchain_core.runnables import RunnableConfig
-from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIMessage
+from langchain_core.messages import AnyMessage, SystemMessage, HumanMessage, AIMessage, ToolMessage
 from langgraph.runtime import Runtime
 from langgraph.store.base import BaseStore
 from langgraph.types import Command, Overwrite
+from langgraph.config import get_stream_writer
 
 import uuid
 
@@ -102,7 +103,19 @@ async def delegate_node(
             "iteration": state.iteration + 1,
         }
 
-    ai_msg: AIMessage = await delegator.ainvoke(state.messages, config=config)
+    messages = []
+    for message in state.messages:
+        if isinstance(message, ToolMessage):
+            subagent_messages = []
+            for msg in message:
+                if isinstance(msg, ToolMessage):
+                    continue
+                subagent_messages.append(msg)
+            messages.extend(subagent_messages)
+        else:
+            messages.append(message)
+
+    ai_msg: AIMessage = await delegator.ainvoke(messages, config=config)
     return {
         "messages": [ai_msg],
         "iteration": state.iteration + 1,
@@ -167,14 +180,14 @@ async def citation_node(
 ):
     llm = runtime.context.citation_model
 
-    report_text = state.report
+    report_text = state.report or ""
 
-    synthesis_text = "\n".join(state.synthesis)
+    synthesis_text = "\n".join(state.synthesis or [])
 
     resp = await llm.ainvoke([
         SystemMessage(content=CITATION_PROMPT),
         HumanMessage(content=(
-            f"<synthesized_text>\nReport without citation:\n{report_text}\n</synthesized_text>\n"
+            f"Report without citation:\n{report_text}\n</synthesized_text>"
             f"Synthesis for citation:\n{synthesis_text}\n"
         ))
     ])

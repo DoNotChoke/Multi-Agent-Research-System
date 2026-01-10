@@ -130,4 +130,14 @@ async def get_web_tools(stateful: bool = False, http: bool = False):
     )
     return await get_tools(connections=conn, stateful=stateful)
 
+async def get_docs_tools(stateful: bool = False, http: bool = False):
+    transport = "http" if http else "stdio"
+    conn = build_mcp_connections(
+        server_name="docs_mcp_server",
+        transport=transport,
+        tools_module="mars.tools.docs_tools.tools",
+        url="http://localhost:8010/mcp",
+    )
+    return await get_tools(connections=conn, stateful=stateful)
+
 

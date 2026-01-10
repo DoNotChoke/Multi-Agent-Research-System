@@ -1,13 +1,15 @@
-from mars.tools.docs_tools.raptor import DocumentIngestion, TreeBuilder, RaptorVectorStore
-
+from mars.tools.docs_tools.raptor import DocumentIngestion, TreeBuilder
+from mars.tools.docs_tools.raptor.retrieval.qdrant_vector_store import QdrantRaptorVectorStore
 
 ingestion = DocumentIngestion()
-chunks = ingestion.load_directory("mars/tools/docs_tools/raptor/data")
+chunks = ingestion.load_directory("mars/tools/docs_tools/raptor/data")  # tuỳ bạn
 
 builder = TreeBuilder()
 tree = builder.build_tree(chunks)
 
-# Index to vector store
-vector_store = RaptorVectorStore()
-vector_store.add_tree(tree)
-vector_store.save()
+vs = QdrantRaptorVectorStore(
+    collection_name="raptor_docs",
+    url="http://localhost:6333",
+)
+vs.add_tree(tree)
+vs.save()

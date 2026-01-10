@@ -144,7 +144,7 @@ class RaptorVectorStore:
             raise ValueError("Vector store is not initialized!")
         k = k or settings.top_k
 
-        return cast(list[Document], self._vector_store.similarity_search(query, k=k, *kwargs))
+        return cast(list[Document], self._vector_store.similarity_search(query, k=k, **kwargs))
 
     def similarity_search_with_score(
             self,
