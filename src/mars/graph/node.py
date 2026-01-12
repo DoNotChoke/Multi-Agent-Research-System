@@ -136,7 +136,7 @@ async def finalize_node(
             HumanMessage(content=(
                 f"User query: {state.user_query}\n\n"
                 f"PLAN: {state.plan}\n\n"
-                f"Research process (include tool results): {render_messages(state.messages)}\n\n"
+                f"Research process (include tool results): {render_messages(compact_tool_messages_for_lead(state.messages))}\n\n"
                 f"Prior synthesis: {prior_synthesis}\n"
                 f"Current iteration: {state.iteration} - Max iterations: {state.max_iterations}"
             ))
