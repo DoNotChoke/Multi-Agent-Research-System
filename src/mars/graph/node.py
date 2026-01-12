@@ -1,3 +1,5 @@
+import json
+
 from mars.graph.state import LeadState, ResearchPlan, ReportAndDecision
 from dataclasses import dataclass
 from typing import Any, Sequence, Optional, Literal, List
@@ -12,6 +14,7 @@ from langgraph.config import get_stream_writer
 
 import uuid
 
+from mars.graph.utils import compact_tool_messages_for_lead
 from mars.prompt.load_prompt import load_prompt_text
 
 
@@ -103,23 +106,9 @@ async def delegate_node(
             "iteration": state.iteration + 1,
         }
 
-    messages = []
-    for message in state.messages:
-        if isinstance(message, ToolMessage):
-            subagent_messages = []
-            for msg in message:
-                if isinstance(msg, ToolMessage):
-                    continue
-                subagent_messages.append(msg)
-            messages.extend(subagent_messages)
-        else:
-            messages.append(message)
-
-    ai_msg: AIMessage = await delegator.ainvoke(messages, config=config)
-    return {
-        "messages": [ai_msg],
-        "iteration": state.iteration + 1,
-    }
+    compacted = compact_tool_messages_for_lead(state.messages)
+    ai_msg = await delegator.ainvoke(compacted, config=config)
+    return {"messages": [ai_msg], "iteration": state.iteration + 1}
 
 
 def render_messages(messages: List[AnyMessage]):

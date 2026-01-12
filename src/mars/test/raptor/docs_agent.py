@@ -3,6 +3,7 @@ import asyncio
 from langchain.agents import create_agent
 from langchain_core.messages import ToolMessage
 
+from mars.graph.node import extract_subagent_final_answer
 from mars.tools.lead_tools.run_agent import run_researcher
 from mars.tools.mcp_tools import get_docs_tools
 
@@ -14,13 +15,7 @@ async def docs_agent():
         worker_graph=agent,
         prompt="What datasets are used for experiment in BitDistill paper?"
     )
-    subagent_message = []
-    for message in resp["messages"]:
-        if isinstance(message, ToolMessage):
-            continue
-        subagent_message.append(message)
-
-    print(subagent_message)
+    print(extract_subagent_final_answer(resp))
 
 if __name__ == '__main__':
     asyncio.run(docs_agent())
